@@ -38,39 +38,40 @@ def find_pixel_scale(header):
     Output:
         pixel_scale: Pixel scale of the image in arcsec/pixel
     """
-    # list of keywords with the pixel scale data that migth be on the header
-    # keywords = ['PIXSCALE', 'SECPIX', 'CDELT1', 'PXSCAL_1']
-    keywords = ['PIXSCALE', 'SECPIX', 'PXSCAL_1']    
+    
     pixel_scale = None
     keys = [key for key in header.keys()]
-    for keyword in keywords:
-        if keyword in keys:
-            pixel_scale = header[keyword]
-            # if keyword == 'CDELT1':
-            #     pixel_scale = abs(pixel_scale)*3600
-            elif keyword == 'PXSCAL_1':
-                pixel_scale = abs(pixel_scale)
-            return pixel_scale
-    if pixel_scale is None:
-        # case with 2 keywords treated separtely for simplicity
-        if ('CD1_1' in keys) and ('CD1_2' in keys):
-            pixel_scale = np.sqrt(header['CD1_1']**2 +
-                                  header['CD1_2']**2)*3600
-            return pixel_scale
-        elif ('PC1_1' in keys) and ('PC1_2' in keys):
-            pixel_scale = np.sqrt(header['PC1_1']**2 +
-                                  header['PC1_2']**2)*3600
-            return pixel_scale
-        else:
-            print('Unable to get pixel scale from image header')
-            while True:
-                pixel_scale = input('Plesae input the pixel scale value in \
-                                    arcsec per pixel')
-                try:
-                    pixel_scale = float(pixel_scale)
-                    return pixel_scale
-                except ValueError:
-                    pass
+
+    if ('CD1_1' in keys) and ('CD1_2' in keys):
+        pixel_scale = np.sqrt(header['CD1_1']**2 + header['CD1_2']**2)*3600
+
+    elif ('PC1_1' in keys) and ('PC1_2' in keys):
+        pixel_scale = np.sqrt(header['PC1_1']**2 + header['PC1_2']**2)*3600
+
+    elif 'PXSCAL_1' in keys:
+        pixel_scale = abs(header['PXSCAL_1'])
+
+    elif 'PIXSCALE' in keys:
+        pixel_scale = header['PIXSCALE']
+
+    elif 'SECPIX' in keys:
+        pixel_scale = header['SECPIX']
+
+    elif 'CDELT1' in keys:
+        pixel_scale = abs(header['CDELT1'])*3600
+
+    else:
+        print('Unable to get pixel scale from image header')
+        while True:
+            pixel_scale = input('Plesae input the pixel scale value in \
+                                arcsec per pixel')
+            try:
+                pixel_scale = float(pixel_scale)
+                return pixel_scale
+            except ValueError:
+                pass
+
+    return pixel_scale
 
 
 def save_fits(name, data, header):
