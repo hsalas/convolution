@@ -4,8 +4,7 @@
 import numpy as np
 from astropy.io import fits
 from scipy.ndimage import zoom
-#from photutils.psf import resize_psf
-from astropy.convolution import convolve, convolve_fft
+from astropy.convolution import convolve_fft
 import glob
 
 import readline
@@ -108,7 +107,6 @@ def save_fits(name, data, header):
 #complete this function to get a more invormative header
 def update_header(header_i, header_k):
     header = header_i.copy()
-    # import pdb; pdb.set_trace()
     header['history'] = ('Convolved version of created with convolve_images.py')
     return header
 
@@ -137,9 +135,8 @@ def do_the_convolution(image, image_h, kernel, kernel_h):
         if round(size) % 2 == 0:
             size += 1
             ratio = size / kernel.shape[0]
-        #import pdb; pdb.set_trace()
         kernel = zoom(kernel, ratio) / ratio**2
-        #kernel = resize_psf(kernel, pixel_scale_k, pixel_scale_i)
+        
     # do convolution
     if len(np.shape(image)) == 2:
         convolved = convolve_fft(image, kernel, nan_treatment='interpolate',
