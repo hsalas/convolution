@@ -1,16 +1,66 @@
 # -*- coding: utf-8 -*-
 # Author: Héctor Salas
 
-import numpy as np
-from astropy.io import fits
-from scipy.ndimage import zoom
-#from photutils.psf import resize_psf
-from astropy.convolution import convolve, convolve_fft
 import glob
+import argparse
+import numpy as np
+import multiprocessing as mp
+from astropy.io import fits
+from itertools import product
+from scipy.ndimage import zoom
+from astropy.convolution import convolve, convolve_fft
 
 import readline
 readline.parse_and_bind('tab: complete')
 readline.set_completer_delims(' \t\n')
+
+help_text = 'Convolution code for astronomical images'
+sign_off = 'Author: Hector Salas <hector.salas.o@gmail.com>'
+
+parser = argparse.ArgumentParser(description=help_text, epilog=sign_off)
+
+parser.add_argument('-im', '--image', type=str, default=None, dest='images', help='Name(s) of image(s) to be convolved. There must be at least one. If more than one, names should be separated with "," eg: "filea,fileb". For a list of images in a text file (one image per line) add "@" before the filename eg: "@list.txt"', action='store')
+parser.add_argument('-ker', '--kernel', type=str, default=None, dest='kernels', help='Name(s) of kernel(s) to be used. There must be at least one. Same input format as for images ',action='store')
+
+arguments = parser.parse_args()
+images = arguments.images
+kernels = arguments.kernels
+
+def check_parser():
+    """Checks that the parser recibe at least one image and one kernel.
+    """
+    if (images == None) and (kernels == None):
+        aux = True
+    elif (images != None) and (kernels == None):
+        raise ValueError('''kernel not given. use -ker="kernel_name"''')
+    elif (images == None) and (kernels != None):
+        raise ValueError('''image  not given. use -im="image_name" ''')
+    else:
+        aux = False
+    return aux
+
+
+def check_inputs(images, kernels):
+    """Check the content of the Inputs.
+
+    """
+    if images[0] == '@':
+        pass
+    elif ',' in  images:
+        images_list = images.split(',')
+    else:
+        images_list = []
+        images_list.append(images)
+
+    if kernels[0] == '@':
+        pass
+    elif ',' in kernels:
+        kernels = kernels.split(',')
+    else:
+        kernels_list = []
+        kernels_list.append(kernels)
+
+    return images_list, kernels_list
 
 
 def load_fits(name):
@@ -38,7 +88,7 @@ def find_pixel_scale(header):
     Output:
         pixel_scale: Pixel scale of the image in arcsec/pixel
     """
-    
+
     pixel_scale = None
     keys = [key for key in header.keys()]
 
@@ -105,12 +155,14 @@ def save_fits(name, data, header):
     fits.writeto(name, data, header=header, overwrite=True)
     print(f'convolved image saved as {name}')
 
-#complete this function to get a more invormative header
+
 def update_header(header_i, header_k):
+    #complete this function to get a more invormative header
     header = header_i.copy()
     # import pdb; pdb.set_trace()
     header['history'] = ('Convolved version of created with convolve_images.py')
     return header
+
 
 def do_the_convolution(image, image_h, kernel, kernel_h):
     """Function that convolve an image with a kernel
@@ -137,9 +189,7 @@ def do_the_convolution(image, image_h, kernel, kernel_h):
         if round(size) % 2 == 0:
             size += 1
             ratio = size / kernel.shape[0]
-        #import pdb; pdb.set_trace()
         kernel = zoom(kernel, ratio) / ratio**2
-        #kernel = resize_psf(kernel, pixel_scale_k, pixel_scale_i)
     # do convolution
     if len(np.shape(image)) == 2:
         convolved = convolve_fft(image, kernel, nan_treatment='interpolate',
@@ -159,13 +209,12 @@ def do_the_convolution(image, image_h, kernel, kernel_h):
     return convolved, kernel
 
 
-if __name__ == '__main__':
-    # load kernel
-    kernel_name = input('Please enter kernel name: ')
-    kernel, header_k = load_fits(kernel_name)
-    # load image
-    image_name = input('Please enter image name: ')
+def proc(image_name, kernel_name):
+    """ perform the convolution of 'image_name' by 'kernel_name'
+    """
+    # load kernel and image
     image, header_i = load_fits(image_name)
+    kernel, header_k = load_fits(kernel_name)
     # do convolution
     convolved, kernel = do_the_convolution(image, header_i, kernel, header_k)
     #update the header info
@@ -173,3 +222,23 @@ if __name__ == '__main__':
     header_new = update_header(header_i, header_k)
     # save convolved image and resized kerne
     save_fits(image_name, convolved, header_new)
+
+
+def main():
+    # get kernel and image names
+    interactive = check_parser()
+    if interactive:
+        image_name = input('Please enter image name: ')
+        kernel_name = input('Please enter kernel name: ')
+        proc(kernel_name, image_name)
+    else:
+        image_list, kernel_list = check_inputs(images, kernels)
+        if len(kernel_list) == 1 and len(image_list) == 1:
+            proc(image_name[0], kernel_name[0])
+        else:
+            comb = product(image_list, kernel_list)
+            with mp.Pool() as pool:
+                pool.starmap(proc, comb)
+
+if __name__ == '__main__':
+    main()
