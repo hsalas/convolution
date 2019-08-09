@@ -55,7 +55,7 @@ def check_inputs(images, kernels):
     if kernels[0] == '@':
         pass
     elif ',' in kernels:
-        kernels = kernels.split(',')
+        kernels_list = kernels.split(',')
     else:
         kernels_list = []
         kernels_list.append(kernels)
