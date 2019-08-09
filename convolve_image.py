@@ -221,8 +221,7 @@ def proc(image_name, kernel_name):
     #update the header info
     #function not finished
     header_new = update_header(header_i, header_k)
-    # save convolved image and resized kerne
-    save_fits(image_name, convolved, header_new)
+    return convolved, header_new, kernel
 
 
 def main():
@@ -231,15 +230,22 @@ def main():
     if interactive:
         image_name = input('Please enter image name: ')
         kernel_name = input('Please enter kernel name: ')
-        proc(image_name, kernel_name)
+        convolved, header,_ = proc(image_name, kernel_name)
+        save_fits(image_name, convolved, header)
     else:
         image_list, kernel_list = check_inputs(images, kernels)
         if len(kernel_list) == 1 and len(image_list) == 1:
-            proc(image_name[0], kernel_name[0])
+            convolved, header,_ = proc(image_list[0], kernel_list[0])
+            save_fits(image_list[0], convolved, header)
         else:
             comb = product(image_list, kernel_list)
+            aux = [i for i in comb]
             with mp.Pool() as pool:
-                pool.starmap(proc, comb)
+                results = pool.starmap(proc, aux)
+            for i in range(len(results)):
+                convolved, header,_ = results[i]
+                save_fits(aux[i][0], convolved, header)
+
 
 if __name__ == '__main__':
     main()
