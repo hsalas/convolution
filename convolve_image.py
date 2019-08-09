@@ -95,8 +95,8 @@ def find_pixel_scale(header):
     if ('CD1_1' in keys) and ('CD1_2' in keys):
         pixel_scale = np.sqrt(header['CD1_1']**2 + header['CD1_2']**2)*3600
 
-    elif ('PC1_1' in keys) and ('PC1_2' in keys):
-        pixel_scale = np.sqrt(header['PC1_1']**2 + header['PC1_2']**2)*3600
+    elif ('PC1_1' in keys) and ('PC2_2' in keys):
+        pixel_scale = np.sqrt(header['PC1_1']**2 + header['PC2_2']**2)*3600
 
     elif 'PXSCAL_1' in keys:
         pixel_scale = abs(header['PXSCAL_1'])
@@ -212,6 +212,7 @@ def do_the_convolution(image, image_h, kernel, kernel_h):
 def proc(image_name, kernel_name):
     """ perform the convolution of 'image_name' by 'kernel_name'
     """
+    print(f'convolving {image_name} by {kernel_name}.')
     # load kernel and image
     image, header_i = load_fits(image_name)
     kernel, header_k = load_fits(kernel_name)
@@ -230,7 +231,7 @@ def main():
     if interactive:
         image_name = input('Please enter image name: ')
         kernel_name = input('Please enter kernel name: ')
-        proc(kernel_name, image_name)
+        proc(image_name, kernel_name)
     else:
         image_list, kernel_list = check_inputs(images, kernels)
         if len(kernel_list) == 1 and len(image_list) == 1:
