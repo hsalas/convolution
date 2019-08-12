@@ -91,7 +91,6 @@ def find_pixel_scale(header):
 
     pixel_scale = None
     keys = [key for key in header.keys()]
-
     if ('CD1_1' in keys) and ('CD1_2' in keys):
         pixel_scale = np.sqrt(header['CD1_1']**2 + header['CD1_2']**2)*3600
 
@@ -156,11 +155,19 @@ def save_fits(name, data, header):
     print(f'convolved image saved as {name}')
 
 
-def update_header(header_i, header_k):
-    #complete this function to get a more invormative header
+def update_header(name_i, header_i, name_k, header_k):
+    """Adds to the header basic information about the convolution
+    """
     header = header_i.copy()
-    # import pdb; pdb.set_trace()
-    header['history'] = ('Convolved version of created with convolve_images.py')
+    if '/' in name_i:
+        name_i = name_i[name_i.rindex('/')+1:]
+    if '/' in name_k:
+        name_k = name_k[name_k.rindex('/')+1:]
+    header.append(('', 'CONVOLUTION'))
+    header.append(('comment','Convolved image created by convolve_images.py'))
+    header.append(('comment',f'Original image: ' + name_i))
+    header.append(('comment',f'Convolution kernel used: '+ name_k))
+
     return header
 
 
@@ -177,7 +184,6 @@ def do_the_convolution(image, image_h, kernel, kernel_h):
     Outputs:
 
     """
-
     # Get image and kernel pixel_scale
     pixel_scale_i = find_pixel_scale(image_h)
     pixel_scale_k = find_pixel_scale(kernel_h)
@@ -219,8 +225,7 @@ def proc(image_name, kernel_name):
     # do convolution
     convolved, kernel = do_the_convolution(image, header_i, kernel, header_k)
     #update the header info
-    #function not finished
-    header_new = update_header(header_i, header_k)
+    header_new = update_header(image_name, header_i, kernel_name, header_k)
     return convolved, header_new, kernel
 
 
