@@ -203,7 +203,7 @@ def do_the_convolution(image, image_h, kernel, kernel_h):
                              boundary='fill', fill_value=0., allow_huge=True)
     else:
         convolved = []
-        for i in range(len(np.shape(image))+1):
+        for i in range(np.shape(image)[0]):
             convolved_i = convolve_fft(image[i], kernel,
                                        nan_treatment='interpolate',
                                        normalize_kernel=True,
