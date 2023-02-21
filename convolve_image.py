@@ -93,7 +93,7 @@ def save_fits(name, data, header):
             try:
                 aux = valid[ow]
                 break
-            except ValueError:
+            except KeyError:
                 pass
         if not aux:
             name = input('Enter new name to save the convolved image: ')
