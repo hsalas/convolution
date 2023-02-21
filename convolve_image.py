@@ -89,7 +89,7 @@ def save_fits(name, data, header):
         # loop to force user to enter only yes or no options
         while True:
             ow = input('Overwrite file (yes/no)? ')
-            ow.lower()
+            ow = ow.lower()
             try:
                 aux = valid[ow]
                 break
