@@ -44,9 +44,6 @@ def find_pixel_scale(header):
     if ('CD1_1' in keys) and ('CD1_2' in keys):
         pixel_scale = np.sqrt(header['CD1_1']**2 + header['CD1_2']**2)*3600
 
-    elif ('PC1_1' in keys) and ('PC1_2' in keys):
-        pixel_scale = np.sqrt(header['PC1_1']**2 + header['PC1_2']**2)*3600
-
     elif 'PXSCAL_1' in keys:
         pixel_scale = abs(header['PXSCAL_1'])
 
@@ -58,6 +55,9 @@ def find_pixel_scale(header):
 
     elif 'CDELT1' in keys:
         pixel_scale = abs(header['CDELT1'])*3600
+
+    elif ('PC1_1' in keys) and ('PC1_2' in keys):
+        pixel_scale = np.sqrt(header['PC1_1']**2 + header['PC1_2']**2)*3600
 
     else:
         print('Unable to get pixel scale from image header')
